@@ -1,0 +1,17 @@
+url: https://example.github.io/ggplotStudioR
+llm-docs: false
+
+template:
+  bootstrap: 5
+
+reference:
+- title: "Launch"
+  contents:
+  - launch
+  - launch_ggplot_studio
+
+articles:
+- title: "Walkthrough"
+  navbar: "Articles"
+  contents:
+  - end-to-end-demo

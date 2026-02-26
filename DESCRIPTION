@@ -1,0 +1,29 @@
+Package: ggplotStudioR
+Type: Package
+Title: Interactive MVP ggplot Editor with Shiny
+Version: 0.0.1
+Authors@R: person(given = "Kana", family = "Assistant", role = c("aut", "cre"), email = "assistant@example.com")
+Author: Kana Assistant [aut, cre]
+Maintainer: Kana Assistant <assistant@example.com>
+Description: Provides a minimal interactive editor for ggplot objects using
+    Shiny. Users can modify labels, themes, palettes, and point/line sizes,
+    preview changes live, and export generated ggplot2 code.
+License: MIT + file LICENSE
+URL: https://example.github.io/ggplotStudioR
+BugReports: https://example.github.io/ggplotStudioR/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.1.0)
+Imports:
+    ggplot2,
+    shiny,
+    clipr
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    pkgdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3

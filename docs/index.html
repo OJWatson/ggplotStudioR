@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Interactive MVP ggplot Editor with Shiny • ggplotStudioR</title>
+<title>Interactive Grammar-of-Graphics Editor with Selection and Spec-Driven Codegen • ggplotStudioR</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Interactive MVP ggplot Editor with Shiny">
-<meta name="description" content="Provides a minimal interactive editor for ggplot objects using Shiny. Users can modify labels, themes, palettes, and point/line sizes, preview changes live, and export generated ggplot2 code.">
-<meta property="og:description" content="Provides a minimal interactive editor for ggplot objects using Shiny. Users can modify labels, themes, palettes, and point/line sizes, preview changes live, and export generated ggplot2 code.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Interactive Grammar-of-Graphics Editor with Selection and Spec-Driven Codegen">
+<meta name="description" content="Provides an interactive editor for ggplot objects using Shiny, with click-based selection, context-aware inspection controls, a deterministic edit-spec model, live preview replay, and reproducible code export in additive and patch-script modes.">
+<meta property="og:description" content="Provides an interactive editor for ggplot objects using Shiny, with click-based selection, context-aware inspection controls, a deterministic edit-spec model, live preview replay, and reproducible code export in additive and patch-script modes.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -37,7 +37,8 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
-    <li><a class="dropdown-item" href="articles/end-to-end-demo.html">End-to-End Demo: Stepwise Editing and Generated Code</a></li>
+    <li><a class="dropdown-item" href="articles/end-to-end-demo.html">End-to-End Demo: Selection, Inspector, and Code Export</a></li>
+    <li><a class="dropdown-item" href="articles/architecture-and-representability.html">Architecture and Representability</a></li>
   </ul>
 </li>
       </ul>
@@ -45,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/OJWatson/ggplotStudioR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -55,23 +57,72 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="ggplotstudior">ggplotStudioR<a class="anchor" aria-label="anchor" href="#ggplotstudior"></a>
 </h1></div>
-<p><code>ggplotStudioR</code> is a minimal R package MVP for interactive editing of <code>ggplot2</code> objects with Shiny.</p>
+<p><code>ggplotStudioR</code> is an interactive editor for existing <code>ggplot2</code> objects.</p>
+<p>This redesign moves beyond fixed sliders into a <strong>selection-driven editor</strong>:</p>
+<ul>
+<li>Click elements on the canvas (title, axes, panel, grid, legend, layers)</li>
+<li>Edit via a context-aware inspector</li>
+<li>Persist edits in a structured spec model</li>
+<li>Export reproducible code in two modes</li>
+</ul>
 <div class="section level2">
-<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+<h2 id="what-is-new-in-this-redesign">What is new in this redesign<a class="anchor" aria-label="anchor" href="#what-is-new-in-this-redesign"></a>
 </h2>
 <ul>
-<li>Live plot preview while editing</li>
-<li>Label controls: title, subtitle, caption, x/y axis labels</li>
-<li>Theme presets: gray, bw, minimal, classic, light, dark, void</li>
-<li>Palette controls for mapped color/fill aesthetics (<code>Set1</code>, <code>Dark2</code>, <code>viridis</code>)</li>
-<li>Point and line size controls</li>
-<li>Generated ggplot2 code view</li>
-<li>Export code to file and copy to clipboard</li>
-<li>Extensible architecture hooks for future drag gestures (<code>editor_extensions()</code>)</li>
+<li>
+<strong>Spec model</strong> (<code>studio_spec_*</code>) for deterministic, serializable edits</li>
+<li>
+<strong>Apply engine</strong> (<code>apply_studio_spec()</code>) that replays spec onto the base plot</li>
+<li>
+<strong>SVG + registry scene model</strong> (<code>build_svg_scene()</code>) used for click mapping</li>
+<li>
+<strong>Canvas module</strong> with click-to-select and overlap cycling</li>
+<li>
+<strong>Inspector module</strong> for context-sensitive controls</li>
+<li>
+<strong>Codegen module</strong> with:<ul>
+<li>
+<code>additive</code> mode (create <code>edited_plot</code> from base plot)</li>
+<li>
+<code>patch</code> mode (mutate plot object in-place)</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="install-locally">Install Locally<a class="anchor" aria-label="anchor" href="#install-locally"></a>
+<h2 id="editable-targets-currently-supported">Editable targets currently supported<a class="anchor" aria-label="anchor" href="#editable-targets-currently-supported"></a>
+</h2>
+<ul>
+<li>Labels/text: title, subtitle, caption, x title, y title</li>
+<li>Theme blocks:<ul>
+<li>panel background / plot background</li>
+<li>panel grid major / minor</li>
+<li>legend container / legend title / legend text</li>
+</ul>
+</li>
+<li>Layers (coarse layer-level):<ul>
+<li>visibility</li>
+<li>
+<code>alpha</code>, <code>size</code>, <code>linewidth</code>, <code>linetype</code>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="representability-constraints-important">Representability constraints (important)<a class="anchor" aria-label="anchor" href="#representability-constraints-important"></a>
+</h2>
+<p><code>ggplot2</code> is declarative and some rendered details are not uniquely reversible. This version intentionally supports a robust representable subset:</p>
+<ul>
+<li>Layer selection is <strong>coarse layer-level</strong> (not per-point drag editing)</li>
+<li>Layer hit-testing is based on built data ranges and panel mapping (Cartesian-first)</li>
+<li>Unknown/unsupported aesthetic parameters are preserved, not rewritten</li>
+<li>Hidden layers are represented via layer filtering in generated code</li>
+</ul>
+<p>These constraints are documented so future drag/point-level editing can be layered in cleanly.</p>
+</div>
+<div class="section level2">
+<h2 id="install-locally">Install locally<a class="anchor" aria-label="anchor" href="#install-locally"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># from workspace root</span></span>
@@ -82,34 +133,49 @@
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://example.github.io/ggplotStudioR">ggplotStudioR</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ojwatson.github.io/ggplotStudioR/">ggplotStudioR</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html" class="external-link">geom_smooth</a></span><span class="op">(</span>se <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/launch.html">launch</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+<h2 id="export-modes">Export modes<a class="anchor" aria-label="anchor" href="#export-modes"></a>
 </h2>
+<p>Inside the app, choose one mode:</p>
 <ul>
-<li>pkgdown article: <a href="articles/end-to-end-demo.html">End-to-end demo</a>
-</li>
-<li>Source vignette: <a href="vignettes/end-to-end-demo.Rmd"><code>vignettes/end-to-end-demo.Rmd</code></a>
-</li>
+<li>
+<strong>Additive ggplot</strong>: writes code that constructs <code>edited_plot</code> from your base object</li>
+<li>
+<strong>Patch script</strong>: writes code that mutates your base plot symbol directly</li>
 </ul>
+<p>Both modes support clipboard copy + file export.</p>
 </div>
 <div class="section level2">
-<h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+<h2 id="walkthrough-and-docs">Walkthrough and docs<a class="anchor" aria-label="anchor" href="#walkthrough-and-docs"></a>
 </h2>
-<p>Generated code assumes your original plot object is named <code>p</code> and includes comments for geometry sizing persistence.</p>
+<ul>
+<li>Article: <code>vignettes/end-to-end-demo.Rmd</code>
+</li>
+<li>Architecture notes: <code>vignettes/architecture-and-representability.Rmd</code>
+</li>
+</ul>
+<div class="section level3">
+<h3 id="demo-gif">Demo GIF<a class="anchor" aria-label="anchor" href="#demo-gif"></a>
+</h3>
+<div class="figure">
+<img src="articles/figures/ggplotStudioR-live-demo.gif" alt=""><p class="caption">ggplotStudioR live demo</p>
+</div>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://example.github.io/ggplotStudioR/issues">Report a bug</a></li>
+<li><a href="https://github.com/OJWatson/ggplotStudioR/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/OJWatson/ggplotStudioR/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 

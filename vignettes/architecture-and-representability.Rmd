@@ -1,0 +1,73 @@
+---
+title: "Architecture and Representability"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Architecture and Representability}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+This article documents the redesigned internals of `ggplotStudioR` and clarifies what is currently representable in generated code.
+
+## Module layout
+
+- **Spec model (`R/spec_model.R`)**
+  - canonical edit state (`labels`, `theme`, `layers`)
+  - update helpers (`studio_spec_update_*`)
+- **Apply engine (`R/apply_spec.R`)**
+  - deterministic replay via `apply_studio_spec()`
+- **Scene + registry (`R/svg_registry.R`)**
+  - render SVG snapshot
+  - build normalized click registry for selectable targets
+- **Canvas module (`R/canvas_module.R`)**
+  - render plot
+  - click-to-select with overlap cycling
+- **Inspector module (`R/inspector_module.R`)**
+  - context-sensitive controls bound to selection type
+- **Codegen (`R/codegen.R`)**
+  - additive and patch export modes
+- **Launch wiring (`R/launch.R`)**
+  - integrates modules and export UX
+
+## Why a spec model?
+
+A spec is a stable, testable representation of user intent. Instead of mutating an already-mutated plot repeatedly, we:
+
+1. keep a base plot
+2. keep an edit spec
+3. recompute preview via `apply_studio_spec(base, spec)`
+
+This gives deterministic behavior and cleaner code generation.
+
+## Representability constraints
+
+`ggplot2` rendering is not fully invertible from screen pixels. Current design intentionally supports a robust subset:
+
+- coarse **layer-level** selection, not per-point drag edits
+- click mapping from registry boxes + layer data bounds (Cartesian-first)
+- inspector exposes only reliably writable fields
+  - labels
+  - selected theme fields
+  - layer `alpha/size/linewidth/linetype`
+
+Unsupported semantics are left untouched and documented rather than guessed.
+
+## Code export modes
+
+- **Additive**: creates `edited_plot` from your base object
+- **Patch**: mutates your plot symbol directly
+
+Both are deterministic outputs from the same spec.
+
+## Extension hooks for next phase
+
+The architecture is intentionally extensible for:
+
+- per-point drag editing
+- richer coordinate-system support for hit-testing
+- spec serialization/import/export
+- undo/redo stacks

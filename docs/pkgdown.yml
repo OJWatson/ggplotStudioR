@@ -2,8 +2,9 @@ pandoc: 2.9.2.1
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  architecture-and-representability: architecture-and-representability.html
   end-to-end-demo: end-to-end-demo.html
-last_built: 2026-02-26T18:12Z
+last_built: 2026-02-26T22:03Z
 urls:
-  reference: https://example.github.io/ggplotStudioR/reference
-  article: https://example.github.io/ggplotStudioR/articles
+  reference: https://ojwatson.github.io/ggplotStudioR/reference
+  article: https://ojwatson.github.io/ggplotStudioR/articles

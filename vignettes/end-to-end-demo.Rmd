@@ -1,8 +1,8 @@
 ---
-title: "End-to-End Demo: Stepwise Editing and Generated Code"
+title: "End-to-End Demo: Selection, Inspector, and Code Export"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{End-to-End Demo: Stepwise Editing and Generated Code}
+  %\VignetteIndexEntry{End-to-End Demo: Selection, Inspector, and Code Export}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -11,11 +11,12 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-This article demonstrates a full editing flow in `ggplotStudioR`: start with a base plot,
-apply control updates step by step, and inspect the generated code after each change.
+This walkthrough demonstrates the redesigned `ggplotStudioR` workflow:
 
-Because pkgdown/vignettes are static, they cannot show live sliders or callbacks. To make
-that limit explicit, this article includes static screenshot-style PNGs for selected steps.
+1. build a base plot
+2. apply deterministic edit spec steps
+3. preview resulting plots
+4. export additive and patch code
 
 ## Base plot
 
@@ -23,30 +24,34 @@ that limit explicit, this article includes static screenshot-style PNGs for sele
 library(ggplot2)
 library(ggplotStudioR)
 
-p <- ggplot(mtcars, aes(wt, mpg, color = factor(cyl))) +
+p <- ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
   geom_point() +
-  geom_smooth(se = FALSE)
+  geom_smooth(se = FALSE) +
+  labs(colour = "Cylinders")
 
 p
 ```
 
-## Deterministic step sequence
+## Deterministic demo journey
 
 ```{r}
-journey <- ggplotStudioR:::build_demo_code_journey(base_plot_expr = "p")
-
-summary_table <- data.frame(
-  step = vapply(journey, `[[`, character(1), "step_name"),
-  stringsAsFactors = FALSE
+journey_add <- ggplotStudioR:::build_demo_code_journey(
+  base_plot_expr = "p",
+  plot = p,
+  mode = "additive"
 )
 
+summary_table <- data.frame(
+  step = vapply(journey_add, `[[`, character(1), "step_name"),
+  stringsAsFactors = FALSE
+)
 knitr::kable(summary_table)
 ```
 
-## Generated code after each control change
+## Additive export code
 
 ```{r, results = 'asis'}
-for (step in journey) {
+for (step in journey_add) {
   cat("\n### Step ", step$step_number, ": ", step$step_name, "\n\n", sep = "")
   cat("```r\n")
   cat(step$code)
@@ -54,34 +59,29 @@ for (step in journey) {
 }
 ```
 
-## Static screenshots (interactivity limitation in docs)
+## Patch export code (same final spec)
 
-These PNGs are static captures for documentation only. In the app, updates happen live as
-controls move.
-
-```{r, echo = FALSE, out.width = '80%', fig.cap = 'Base plot (static screenshot).'}
-knitr::include_graphics("figures/step-01-base.png")
+```{r}
+final_spec <- journey_add[[length(journey_add)]]$spec
+patch_code <- ggplotStudioR:::generate_plot_code("p", final_spec, mode = "patch")
+cat(patch_code)
 ```
 
-```{r, echo = FALSE, out.width = '80%', fig.cap = 'After label/theme changes (static screenshot).'}
-knitr::include_graphics("figures/step-02-label-theme.png")
-```
-
-```{r, echo = FALSE, out.width = '80%', fig.cap = 'After palette and size updates (static screenshot).'}
-knitr::include_graphics("figures/step-03-palette-size.png")
-```
-
-## Reproducing the journey in code
+## Edited plots per step
 
 ```{r}
 edited_plots <- ggplotStudioR:::build_demo_plot_journey(p)
-
 length(edited_plots)
-class(edited_plots[[1]])
 ```
-
-You can inspect any step, for example:
 
 ```{r}
 edited_plots[[5]]
+```
+
+## Interactivity in static docs
+
+Vignettes/pkgdown cannot execute live click handlers. Use `launch(p)` locally for full canvas selection + inspector editing.
+
+```{r, echo = FALSE, out.width = '85%', fig.cap = 'Recorded app walkthrough GIF (live interaction shown as recording).'}
+knitr::include_graphics("figures/ggplotStudioR-live-demo.gif")
 ```

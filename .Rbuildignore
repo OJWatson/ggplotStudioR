@@ -1,0 +1,7 @@
+^docs$
+^\.github$
+^demo_gif$
+^_pkgdown\.yml$
+^LICENSE\.md$
+^ggplotStudioR\.Rcheck$
+^\.Rcheck$

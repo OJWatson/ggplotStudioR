@@ -1,11 +1,12 @@
 test_that("demo journey returns deterministic ordered steps", {
-  journey <- ggplotStudioR:::build_demo_code_journey("base_plot")
+  p <- ggplotStudioR:::demo_reference_plot()
+  journey <- ggplotStudioR:::build_demo_code_journey("base_plot", plot = p, mode = "additive")
 
   expect_length(journey, 5)
   expect_equal(journey[[1]]$step_name, "Initial state")
-  expect_equal(journey[[5]]$controls$caption, "Edited in ggplotStudioR")
-  expect_match(journey[[2]]$code, "title = \"MPG vs Weight\"")
-  expect_match(journey[[4]]$code, "scale_color_brewer")
+  expect_equal(journey[[5]]$step_name, "Layer tuning")
+  expect_match(journey[[2]]$code, "MPG vs Weight")
+  expect_match(journey[[3]]$code, "panel.background = ggplot2::element_rect")
 })
 
 test_that("demo plot journey returns ggplot objects", {

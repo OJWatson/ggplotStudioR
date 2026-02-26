@@ -1,13 +1,7 @@
-# Core helpers for applying UI state to a ggplot and producing reproducible code.
+# Backward-compatible core helpers from the original MVP controls model.
 
 .palette_choices <- c("none", "hue", "Set1", "Dark2", "viridis")
 .theme_choices <- c("gray", "bw", "minimal", "classic", "light", "dark", "void")
-
-validate_ggplot <- function(plot) {
-  if (!inherits(plot, "ggplot")) {
-    stop("`plot` must be a ggplot object.", call. = FALSE)
-  }
-}
 
 is_mapped_aes <- function(plot, aes_name) {
   global_map <- names(plot$mapping)
@@ -102,45 +96,6 @@ build_plot_from_controls <- function(plot, controls) {
   }
 
   apply_geom_sizes(edited, controls$point_size, controls$line_size)
-}
-
-generate_plot_code <- function(base_plot_expr = "p", controls) {
-  layers <- c(
-    sprintf(
-      "ggplot2::labs(title = %s, subtitle = %s, caption = %s, x = %s, y = %s)",
-      deparse(controls$title),
-      deparse(controls$subtitle),
-      deparse(controls$caption),
-      deparse(controls$x_label),
-      deparse(controls$y_label)
-    ),
-    sprintf("ggplot2::theme_%s()", controls$theme)
-  )
-
-  palette_comment <- NULL
-  if (controls$palette %in% c("Set1", "Dark2")) {
-    palette_comment <- "# Add discrete Brewer palette when color/fill is mapped"
-    layers <- c(
-      layers,
-      sprintf("ggplot2::scale_color_brewer(palette = %s)", deparse(controls$palette)),
-      sprintf("ggplot2::scale_fill_brewer(palette = %s)", deparse(controls$palette))
-    )
-  } else if (controls$palette == "viridis") {
-    palette_comment <- "# Add viridis discrete palette when color/fill is mapped"
-    layers <- c(
-      layers,
-      "ggplot2::scale_color_viridis_d()",
-      "ggplot2::scale_fill_viridis_d()"
-    )
-  }
-
-  code <- paste(c(base_plot_expr, paste0("  ", layers)), collapse = " +\n")
-  notes <- c(
-    sprintf("# Geom size intent: point_size = %s, line_size = %s", controls$point_size, controls$line_size),
-    "# Use explicit geom arguments in your source plot for persistence"
-  )
-
-  paste(c(code, palette_comment, notes), collapse = "\n")
 }
 
 editor_extensions <- function() {

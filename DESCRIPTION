@@ -1,15 +1,16 @@
 Package: ggplotStudioR
 Type: Package
-Title: Interactive MVP ggplot Editor with Shiny
+Title: Interactive Grammar-of-Graphics Editor with Selection and Spec-Driven Codegen
 Version: 0.0.1
 Authors@R: person(given = "Kana", family = "Assistant", role = c("aut", "cre"), email = "assistant@example.com")
 Author: Kana Assistant [aut, cre]
 Maintainer: Kana Assistant <assistant@example.com>
-Description: Provides a minimal interactive editor for ggplot objects using
-    Shiny. Users can modify labels, themes, palettes, and point/line sizes,
-    preview changes live, and export generated ggplot2 code.
+Description: Provides an interactive editor for ggplot objects using Shiny,
+    with click-based selection, context-aware inspection controls, a
+    deterministic edit-spec model, live preview replay, and reproducible code
+    export in additive and patch-script modes.
 License: MIT + file LICENSE
-URL: https://ojwatson.github.io/ggplotStudioR, https://github.com/OJWatson/ggplotStudioR
+URL: https://ojwatson.github.io/ggplotStudioR/, https://github.com/OJWatson/ggplotStudioR
 BugReports: https://github.com/OJWatson/ggplotStudioR/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

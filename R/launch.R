@@ -1,6 +1,6 @@
 #' Launch ggplotStudioR Interactive Editor
 #'
-#' Open a Shiny-based MVP editor for a ggplot object.
+#' Open the next-generation Shiny editor for an existing `ggplot2` object.
 #'
 #' @param plot A ggplot object to edit.
 #' @return Invisibly returns a [shiny::shiny.appobj()] after app closure.
@@ -9,65 +9,79 @@ launch_ggplot_studio <- function(plot) {
   validate_ggplot(plot)
 
   ui <- shiny::fluidPage(
-    shiny::sidebarLayout(
-      shiny::sidebarPanel(
-        shiny::textInput("title", "Title", value = plot$labels$title %||% ""),
-        shiny::textInput("subtitle", "Subtitle", value = plot$labels$subtitle %||% ""),
-        shiny::textInput("caption", "Caption", value = plot$labels$caption %||% ""),
-        shiny::textInput("x_label", "X Label", value = plot$labels$x %||% ""),
-        shiny::textInput("y_label", "Y Label", value = plot$labels$y %||% ""),
-        shiny::selectInput("theme", "Theme Preset", choices = .theme_choices, selected = "gray"),
-        shiny::selectInput("palette", "Palette", choices = .palette_choices, selected = "hue"),
-        shiny::sliderInput("point_size", "Point Size", min = 0.5, max = 8, value = 2, step = 0.1),
-        shiny::sliderInput("line_size", "Line Size", min = 0.2, max = 5, value = 1, step = 0.1),
-        shiny::downloadButton("download_code", "Export Code File"),
-        shiny::actionButton("copy_code", "Copy Code to Clipboard")
-      ),
-      shiny::mainPanel(
-        shiny::plotOutput("plot_preview"),
+    shiny::fluidRow(
+      shiny::column(
+        width = 4,
+        shiny::wellPanel(
+          shiny::h3("Inspector"),
+          inspector_module_ui("inspector"),
+          shiny::hr(),
+          shiny::h4("Code export"),
+          shiny::textInput("base_plot_expr", "Base plot symbol", value = "p"),
+          shiny::radioButtons(
+            "export_mode",
+            "Export mode",
+            choices = c("Additive ggplot" = "additive", "Patch script" = "patch"),
+            selected = "additive",
+            inline = TRUE
+          ),
+          shiny::downloadButton("download_code", "Export code file"),
+          shiny::actionButton("copy_code", "Copy code to clipboard")
+        ),
+        shiny::h4("Generated code"),
         shiny::verbatimTextOutput("generated_code")
+      ),
+      shiny::column(
+        width = 8,
+        canvas_module_ui("canvas")
       )
     )
   )
 
   server <- function(input, output, session) {
-    controls <- reactive({
-      list(
-        title = input$title,
-        subtitle = input$subtitle,
-        caption = input$caption,
-        x_label = input$x_label,
-        y_label = input$y_label,
-        theme = input$theme,
-        palette = input$palette,
-        point_size = input$point_size,
-        line_size = input$line_size
+    spec_state <- shiny::reactiveVal(studio_spec_init(plot))
+
+    update_spec <- function(mutator) {
+      next_spec <- mutator(spec_state())
+      studio_spec_validate(next_spec, plot)
+      spec_state(next_spec)
+    }
+
+    edited_plot <- shiny::reactive({
+      apply_studio_spec(plot, spec_state())
+    })
+
+    canvas <- canvas_module_server("canvas", plot = edited_plot)
+
+    inspector_module_server(
+      "inspector",
+      selected = canvas$selected,
+      spec = shiny::reactive(spec_state()),
+      update_spec = update_spec
+    )
+
+    generated_code <- shiny::reactive({
+      base_expr <- studio_null_if_empty(input$base_plot_expr) %||% "p"
+      generate_plot_code(
+        base_plot_expr = base_expr,
+        spec = spec_state(),
+        mode = input$export_mode %||% "additive"
       )
     })
 
-    edited_plot <- reactive({
-      build_plot_from_controls(plot, controls())
-    })
-
-    output$plot_preview <- shiny::renderPlot({
-      edited_plot()
-    })
-
-    output$generated_code <- shiny::renderText({
-      generate_plot_code("p", controls())
-    })
+    output$generated_code <- shiny::renderText(generated_code())
 
     output$download_code <- shiny::downloadHandler(
       filename = function() {
-        "ggplotStudioR_plot_code.R"
+        sprintf("ggplotStudioR_%s_code.R", input$export_mode %||% "additive")
       },
       content = function(file) {
-        writeLines(generate_plot_code("p", controls()), con = file)
+        writeLines(generated_code(), con = file)
       }
     )
 
     shiny::observeEvent(input$copy_code, {
-      code <- generate_plot_code("p", controls())
+      code <- generated_code()
       ok <- FALSE
 
       try({
@@ -103,8 +117,4 @@ launch_ggplot_studio <- function(plot) {
 #' @export
 launch <- function(plot) {
   launch_ggplot_studio(plot)
-}
-
-`%||%` <- function(lhs, rhs) {
-  if (is.null(lhs) || identical(lhs, "")) rhs else lhs
 }
